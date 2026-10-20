@@ -522,13 +522,17 @@ button, input { font: inherit; color: inherit; }
   font-size: var(--t-m);
   line-height: 1.6;
   color: var(--ink);
-  tab-size: 2;
-  white-space: pre;
   width: max-content;
   min-width: 100%;
+  column-gap: 32px;
+  column-rule: 1px solid var(--line-soft);
 }
-.tree .ln { display: inline-block; min-width: 100%; border-radius: 4px; transition: background-color var(--fast); }
-.tree .t-root { color: var(--accent); font-weight: 600; }
+/* Several columns: fill the pane width; each set stays in one column when it fits */
+.tree.multi { width: auto; }
+.tree .grp { break-inside: avoid; }
+.tree .grp + .grp { margin-top: 1.6em; } /* one blank line; dropped at the top of a column */
+.tree .ln { display: block; white-space: pre; border-radius: 4px; transition: background-color var(--fast); }
+.tree .ln.dir { break-after: avoid; }
 .tree .t-dir { color: var(--accent); }
 .tree .t-cmt { color: var(--muted); }
 .tree .t-num { color: var(--syn-num); }
@@ -717,13 +721,13 @@ button, input { font: inherit; color: inherit; }
 
       <section class="output-pane" aria-label="Archive manifest">
         <div class="out-head">
-          <span class="out-file" id="zip-name">DataWizard_YYYY-MM-DD.zip</span>
+          <span class="out-file" id="zip-name"></span>
           <span class="out-meta" id="meta" aria-live="polite"></span>
           <span class="out-status" id="status" aria-live="polite"></span>
         </div>
         <p class="out-warning" id="warning" role="alert" hidden></p>
         <div class="out-body">
-          <pre class="tree" id="tree"></pre>
+          <div class="tree" id="tree"></div>
           <div class="out-empty" id="empty" hidden>
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
             <p id="empty-msg"></p>
@@ -1348,17 +1352,26 @@ const UNIT_BYTES = { B: 1, KB, MB };
 const WARN_TOTAL_BYTES = 500 * MB;
 const MAX_SIZES = 500; // per set; above this the input is rejected, never truncated
 
+const MIME = {
+  pdf: "application/pdf",
+  png: "image/png",
+  jpg: "image/jpeg",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+};
+
+// v: variant code used in file names (C = compressible, U = uncompressible)
 const TYPES = {
-  "pdf-comp": { kind: "pdf", dir: "PDF_Compressible", ext: "pdf", prefix: "PDF", make: makePdfCompressible },
-  "pdf-unc": { kind: "pdf", dir: "PDF_Uncompressible", ext: "pdf", prefix: "PDF", make: makePdfUncompressible },
-  "png-comp": { kind: "png", dir: "PNG_Compressible", ext: "png", prefix: "PNG", make: makePngCompressible },
-  "png-unc": { kind: "png", dir: "PNG_Uncompressible", ext: "png", prefix: "PNG", make: makePngUncompressible },
-  "jpeg-comp": { kind: "jpeg", dir: "JPEG_Compressible", ext: "jpg", prefix: "JPEG", make: makeJpegCompressible },
-  "jpeg-unc": { kind: "jpeg", dir: "JPEG_Uncompressible", ext: "jpg", prefix: "JPEG", make: makeJpegUncompressible },
-  "docx-comp": { kind: "docx", dir: "DOCX_Compressible", ext: "docx", prefix: "DOCX", make: makeDocxCompressible },
-  "docx-unc": { kind: "docx", dir: "DOCX_Uncompressible", ext: "docx", prefix: "DOCX", make: makeDocxUncompressible },
-  "xlsx-comp": { kind: "xlsx", dir: "XLSX_Compressible", ext: "xlsx", prefix: "XLSX", make: makeXlsxCompressible },
-  "xlsx-unc": { kind: "xlsx", dir: "XLSX_Uncompressible", ext: "xlsx", prefix: "XLSX", make: makeXlsxUncompressible },
+  "pdf-comp": { kind: "pdf", v: "C", dir: "PDF_Compressible", ext: "pdf", prefix: "PDF", make: makePdfCompressible },
+  "pdf-unc": { kind: "pdf", v: "U", dir: "PDF_Uncompressible", ext: "pdf", prefix: "PDF", make: makePdfUncompressible },
+  "png-comp": { kind: "png", v: "C", dir: "PNG_Compressible", ext: "png", prefix: "PNG", make: makePngCompressible },
+  "png-unc": { kind: "png", v: "U", dir: "PNG_Uncompressible", ext: "png", prefix: "PNG", make: makePngUncompressible },
+  "jpeg-comp": { kind: "jpeg", v: "C", dir: "JPEG_Compressible", ext: "jpg", prefix: "JPEG", make: makeJpegCompressible },
+  "jpeg-unc": { kind: "jpeg", v: "U", dir: "JPEG_Uncompressible", ext: "jpg", prefix: "JPEG", make: makeJpegUncompressible },
+  "docx-comp": { kind: "docx", v: "C", dir: "DOCX_Compressible", ext: "docx", prefix: "DOCX", make: makeDocxCompressible },
+  "docx-unc": { kind: "docx", v: "U", dir: "DOCX_Uncompressible", ext: "docx", prefix: "DOCX", make: makeDocxUncompressible },
+  "xlsx-comp": { kind: "xlsx", v: "C", dir: "XLSX_Compressible", ext: "xlsx", prefix: "XLSX", make: makeXlsxCompressible },
+  "xlsx-unc": { kind: "xlsx", v: "U", dir: "XLSX_Uncompressible", ext: "xlsx", prefix: "XLSX", make: makeXlsxUncompressible },
 };
 
 // ---------- DOM references ----------
@@ -1550,12 +1563,27 @@ function buildFileSpecs(state, sizes) {
       specs.push({
         typeKey: key,
         dir: t.dir,
-        name: `${t.prefix}_${s.label}.${t.ext}`,
+        name: `DW_${t.prefix}_${t.v}_${s.label}.${t.ext}`,
+        mime: MIME[t.ext],
         sizeBytes: s.bytes,
       });
     }
   }
   return specs;
+}
+
+// Packaging adapts to the batch:
+//   1 file          -> the file itself, no zip
+//   1 set           -> DW_<date>.zip with the files at its root
+//   several sets    -> DW_<date>.zip with one folder per set
+function planOutput(specs) {
+  const sets = new Set(specs.map((s) => s.typeKey)).size;
+  if (specs.length === 1) {
+    return { kind: "single", outName: specs[0].name, path: (s) => s.name };
+  }
+  const outName = `DW_${todayISO()}.zip`;
+  if (sets === 1) return { kind: "flat", outName, path: (s) => s.name };
+  return { kind: "folders", outName, path: (s) => `${s.dir}/${s.name}` };
 }
 
 function showFieldErrors(errs) {
@@ -1579,47 +1607,54 @@ function el(tag, cls, text) {
 
 // Builds the zip tree. Each line is a list of [class, text] tokens, so the
 // coloured view and the copied plain text come from the same source.
-function buildTree(specs, types, folderName) {
+function buildTree(specs, types, layout) {
   const groups = [];
   for (const key of types) {
     const files = specs.filter((s) => s.typeKey === key);
     if (files.length) groups.push({ key, files });
   }
 
+  // Folder lines only when the zip actually has folders (several sets)
+  const nested = layout.kind === "folders";
+  const fileIndent = nested ? "  " : "";
   const nameCol =
     Math.max(
-      folderName.length + 1,
-      ...groups.map((g) => 2 + g.files[0].dir.length + 1),
-      ...specs.map((s) => 4 + s.name.length),
+      ...(nested ? groups.map((g) => g.files[0].dir.length + 1) : []),
+      ...specs.map((s) => fileIndent.length + s.name.length),
     ) + 4;
+  const groupBytes = (g) => g.files.reduce((a, s) => a + s.sizeBytes, 0);
   const numW = Math.max(
     ...specs.map((s) => fmtExact(s.sizeBytes).length),
-    ...groups.map((g) => fmtBytes(g.files.reduce((a, s) => a + s.sizeBytes, 0)).length),
+    ...(nested ? groups.map((g) => fmtBytes(groupBytes(g)).length) : []),
   );
-  const countW = Math.max(...groups.map((g) => `${g.files.length} files`.length));
+  const countW = nested ? Math.max(...groups.map((g) => `${g.files.length} files`.length)) : 0;
+  const numGap = nested ? countW + 2 : 0;
 
   const lines = [];
-  lines.push({ tokens: [["t-root", `${folderName}/`]] });
   for (const g of groups) {
-    const dirText = `  ${g.files[0].dir}/`;
-    const bytes = g.files.reduce((a, s) => a + s.sizeBytes, 0);
-    const count = `${g.files.length} file${g.files.length === 1 ? "" : "s"}`;
-    lines.push({
-      tokens: [
-        ["t-dir", dirText],
-        ["", " ".repeat(nameCol - dirText.length)],
-        ["t-cmt", count.padEnd(countW)],
-        ["", "  "],
-        ["t-num", fmtBytes(bytes).padStart(numW)],
-      ],
-    });
-    for (const f of g.files) {
-      const nameText = `    ${f.name}`;
+    if (nested) {
+      const dirText = `${g.files[0].dir}/`;
+      const count = `${g.files.length} file${g.files.length === 1 ? "" : "s"}`;
       lines.push({
+        group: g.key,
+        dir: true,
+        tokens: [
+          ["t-dir", dirText],
+          ["", " ".repeat(nameCol - dirText.length)],
+          ["t-cmt", count.padEnd(countW)],
+          ["", "  "],
+          ["t-num", fmtBytes(groupBytes(g)).padStart(numW)],
+        ],
+      });
+    }
+    for (const f of g.files) {
+      const nameText = `${fileIndent}${f.name}`;
+      lines.push({
+        group: g.key,
         spec: f,
         tokens: [
           ["t-file", nameText],
-          ["", " ".repeat(nameCol - nameText.length + countW + 2)],
+          ["", " ".repeat(nameCol - nameText.length + numGap)],
           ["t-num", fmtExact(f.sizeBytes).padStart(numW)],
         ],
       });
@@ -1628,25 +1663,75 @@ function buildTree(specs, types, folderName) {
   return lines;
 }
 
+// Each set renders as its own block so the column layout can keep a folder
+// header with its files. The copied text is always the single-column list.
 function renderTree(lines) {
   const frag = document.createDocumentFragment();
   const plain = [];
   let fileIdx = 0;
+  let block = null;
+  let blockKey = null;
   for (const line of lines) {
-    const span = el("span", "ln");
-    if (line.spec) span.dataset.i = String(fileIdx++);
+    if (line.group !== blockKey) {
+      if (block) plain.push(""); // blank line between sets, as on screen
+      block = el("div", "grp");
+      frag.appendChild(block);
+      blockKey = line.group;
+    }
+    const row = el("div", line.dir ? "ln dir" : "ln");
+    if (line.spec) row.dataset.i = String(fileIdx++);
     let text = "";
     for (const [cls, t] of line.tokens) {
       text += t;
-      span.appendChild(cls ? el("span", cls, t) : document.createTextNode(t));
+      row.appendChild(cls ? el("span", cls, t) : document.createTextNode(t));
     }
     plain.push(text);
-    frag.appendChild(span);
-    frag.appendChild(document.createTextNode("\n"));
+    block.appendChild(row);
   }
   treeEl.replaceChildren(frag);
+  treeEl.dataset.chars = String(Math.max(...plain.map((t) => t.length)));
+  treeEl.dataset.lines = String(plain.length);
+  layoutColumns();
   return plain.join("\n") + "\n";
 }
+
+// ---------- Column layout ----------
+// When the list is taller than the pane, spread it over every column that
+// fits the pane width. Lists that fit the visible height stay in one column.
+
+const COL_GAP = 32;
+let charWidth = 0;
+
+function measureCharWidth() {
+  const probe = el("span", "", "0".repeat(100));
+  probe.style.cssText = "position:absolute;visibility:hidden;white-space:pre";
+  treeEl.appendChild(probe);
+  const w = probe.getBoundingClientRect().width / 100;
+  probe.remove();
+  return w;
+}
+
+function layoutColumns() {
+  if (treeEl.hidden || !treeEl.dataset.lines) return;
+  if (!charWidth) charWidth = measureCharWidth();
+  const body = treeEl.parentElement;
+  const cs = getComputedStyle(treeEl);
+  const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const lineH = parseFloat(cs.lineHeight);
+  const colW = Number(treeEl.dataset.chars) * charWidth;
+  const lines = Number(treeEl.dataset.lines);
+
+  const fitCols = Math.max(1, Math.floor((body.clientWidth - padX + COL_GAP) / (colW + COL_GAP)));
+  const visibleRows = Math.max(1, Math.floor((body.clientHeight - padY) / lineH));
+  // Fits in one column: keep one. Otherwise use every column the width allows.
+  const cols = lines <= visibleRows ? 1 : fitCols;
+
+  treeEl.style.columnCount = cols > 1 ? String(cols) : "";
+  treeEl.classList.toggle("multi", cols > 1);
+}
+
+new ResizeObserver(() => layoutColumns()).observe(treeEl.parentElement);
 
 function renderMeta(setCount, totalFiles, totalBytes) {
   const items = [
@@ -1689,12 +1774,10 @@ function render({ clearStatus = true } = {}) {
     previewEl.textContent = "";
   }
 
-  // Zip filename
-  const folderName = `DataWizard_${todayISO()}`;
-  zipNameEl.textContent = `${folderName}.zip`;
-
   // Manifest
   const specs = buildFileSpecs(state, sizes);
+  const layout = planOutput(specs);
+  zipNameEl.textContent = specs.length ? layout.outName : `DW_${todayISO()}.zip`;
   const totalFiles = specs.length;
   const totalBytes = specs.reduce((a, s) => a + s.sizeBytes, 0);
   const setCount = new Set(specs.map((s) => s.typeKey)).size;
@@ -1712,7 +1795,7 @@ function render({ clearStatus = true } = {}) {
   } else {
     treeEl.hidden = false;
     emptyEl.hidden = true;
-    manifestText = renderTree(buildTree(specs, state.types, folderName));
+    manifestText = renderTree(buildTree(specs, state.types, layout));
     renderMeta(setCount, totalFiles, totalBytes);
   }
 
@@ -1741,23 +1824,28 @@ function setStatus(msg, cls = "") {
 
 // ---------- Zip generation ----------
 
-async function* fileStream(specs, folderName, onProgress) {
+async function* fileStream(specs, layout, onProgress) {
   let idx = 0;
   for (const spec of specs) {
     idx += 1;
     onProgress(idx, specs.length, spec);
     // Yield to event loop so status updates paint before CPU work
     await new Promise((r) => setTimeout(r, 0));
-    const bytes = await TYPES[spec.typeKey].make(spec.sizeBytes);
-    if (bytes.length !== spec.sizeBytes) {
-      throw new Error(`${spec.name} came out at ${bytes.length} bytes, expected ${spec.sizeBytes}`);
-    }
+    const bytes = await makeExact(spec);
     yield {
-      name: `${folderName}/${spec.dir}/${spec.name}`,
+      name: layout.path(spec),
       input: bytes,
       lastModified: new Date(),
     };
   }
+}
+
+async function makeExact(spec) {
+  const bytes = await TYPES[spec.typeKey].make(spec.sizeBytes);
+  if (bytes.length !== spec.sizeBytes) {
+    throw new Error(`${spec.name} came out at ${bytes.length} bytes, expected ${spec.sizeBytes}`);
+  }
+  return bytes;
 }
 
 function markProgress(i) {
@@ -1794,8 +1882,11 @@ async function generate(event) {
     return;
   }
 
-  const folderName = `DataWizard_${todayISO()}`;
-  const zipName = `${folderName}.zip`;
+  const layout = planOutput(specs);
+  const outName = layout.outName;
+  const single = layout.kind === "single";
+  const outMime = single ? specs[0].mime : "application/zip";
+  const outExt = "." + outName.split(".").pop();
 
   form.inert = true;
   generateBtn.disabled = true;
@@ -1804,7 +1895,7 @@ async function generate(event) {
   setStatus("Preparing…", "busy");
 
   const onProgress = (i, total, spec) => {
-    setStatus(`[${i}/${total}] ${spec.dir}/${spec.name}`, "busy");
+    setStatus(`[${i}/${total}] ${layout.path(spec)}`, "busy");
     markProgress(i);
   };
 
@@ -1817,8 +1908,8 @@ async function generate(event) {
       let handle;
       try {
         handle = await window.showSaveFilePicker({
-          suggestedName: zipName,
-          types: [{ description: "Zip archive", accept: { "application/zip": [".zip"] } }],
+          suggestedName: outName,
+          types: [{ description: single ? specs[0].name : "Zip archive", accept: { [outMime]: [outExt] } }],
         });
       } catch (e) {
         if (e && e.name === "AbortError") {
@@ -1829,24 +1920,36 @@ async function generate(event) {
         throw e;
       }
       const writable = await handle.createWritable();
-      const response = downloadZip(fileStream(specs, folderName, onProgress));
-      await response.body.pipeTo(writable);
+      if (single) {
+        onProgress(1, 1, specs[0]);
+        await new Promise((r) => setTimeout(r, 0));
+        await new Blob([await makeExact(specs[0])]).stream().pipeTo(writable);
+      } else {
+        const response = downloadZip(fileStream(specs, layout, onProgress));
+        await response.body.pipeTo(writable);
+      }
       finishProgress();
-      setStatus(`Wrote ${zipName}.`, "ok");
+      setStatus(`Wrote ${outName}.`, "ok");
     } else {
       // Fallback: buffer to a Blob, trigger anchor download.
-      const response = downloadZip(fileStream(specs, folderName, onProgress));
-      const blob = await response.blob();
+      let blob;
+      if (single) {
+        onProgress(1, 1, specs[0]);
+        await new Promise((r) => setTimeout(r, 0));
+        blob = new Blob([await makeExact(specs[0])], { type: outMime });
+      } else {
+        blob = await downloadZip(fileStream(specs, layout, onProgress)).blob();
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = zipName;
+      a.download = outName;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
       finishProgress();
-      setStatus(`Downloaded ${zipName} (${fmtBytes(blob.size)}).`, "ok");
+      setStatus(`Downloaded ${outName} (${fmtBytes(blob.size)}).`, "ok");
     }
   } catch (err) {
     console.error(err);
