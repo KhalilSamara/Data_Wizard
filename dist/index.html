@@ -1,0 +1,1937 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Data Wizard</title>
+  <meta name="description" content="Byte-precise test file generator for load and upload testing. Runs in the browser, downloads as a zip.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjggOCA0OCA0OCI+CiAgPHJlY3QgeD0iOCIgeT0iOCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMTMiIGZpbGw9IiNCNDhBRTgiLz4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMyAxMykgc2NhbGUoMS42KSIgZmlsbD0iIzJCMkIyQiI+CiAgICA8cGF0aCBkPSJNNS41IDE4LjUgMTQgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJCMkIyQiIgc3Ryb2tlLXdpZHRoPSIyLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogICAgPHBhdGggZD0iTTE3LjUgMi42IDE4LjcgNS4zIDIxLjQgNi41IDE4LjcgNy43IDE3LjUgMTAuNCAxNi4zIDcuNyAxMy42IDYuNSAxNi4zIDUuM1oiLz4KICAgIDxjaXJjbGUgY3g9IjExIiBjeT0iNC42IiByPSIxLjIiLz4KICAgIDxjaXJjbGUgY3g9IjIwLjQiIGN5PSIxMyIgcj0iMS4yIi8+CiAgPC9nPgo8L3N2Zz4K">
+  <style>
+/* Data Wizard: Performance Suite "JMeter Darcula" theme */
+
+:root {
+  /* Suite neutrals (identical across tools) */
+  --bg: #2B2B2B;
+  --topbar: #333536;
+  --surface: #3C3F41;
+  --well: #212223;
+  --ink: #D6D6D6;
+  --muted: #9AA0A0;
+  --dim: #8A9090;
+  --line: #4F5355;
+  --line-soft: #34383A;
+  --ok: #6EBF6E;
+  --danger: #FF6E67;
+
+  /* Tool accent: Data Wizard lavender */
+  --accent: #B48AE8;
+  --accent-hover: #C3A0EE;
+  --accent-press: #9F72DB;
+  --accent-tint: rgba(180, 138, 232, 0.14);
+
+  /* Output syntax */
+  --syn-num: #E0B060;
+  --syn-str: #8FB573;
+
+  /* Shape and type */
+  --r-s: 4px;
+  --r-m: 6px;
+  --r-l: 10px;
+  --t-xs: 11px;
+  --t-s: 12px;
+  --t-m: 13px;
+  --t-l: 15px;
+  --t-xl: 19px;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", Consolas, "Cascadia Mono", Menlo, "SF Mono", ui-monospace, monospace;
+
+  --topbar-h: 52px;
+  --fast: 120ms;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+}
+
+body {
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--t-m);
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+button, input { font: inherit; color: inherit; }
+
+[hidden] { display: none !important; }
+
+.icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* ---------- App shell ---------- */
+
+.app {
+  height: 100vh;
+  height: 100dvh;
+  max-width: 2000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  flex: 0 0 auto;
+  min-height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  background: var(--topbar);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Chip geometry matches Commandeer: 48x48 rect, rx 13, in a 64 viewBox */
+.chip { width: 36px; height: 36px; margin: -4px; flex-shrink: 0; display: block; }
+.chip-bg { fill: var(--accent); }
+.chip-glyph { fill: var(--bg); stroke: var(--bg); stroke-width: 0; }
+.chip-glyph path[fill="none"] { stroke-width: 2.6; }
+
+.tool-name {
+  font-size: var(--t-l);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tool-ver {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  color: var(--dim);
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-s);
+  border: 1px solid transparent;
+  font-size: var(--t-m);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--fast), border-color var(--fast), color var(--fast);
+}
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn:disabled { cursor: not-allowed; }
+
+.btn.primary {
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+}
+.btn.primary:hover:not(:disabled) { background: var(--accent-hover); }
+.btn.primary:active:not(:disabled) { background: var(--accent-press); }
+.btn.primary:disabled { background: var(--surface); color: var(--dim); }
+.btn.primary.working { background: var(--surface); color: var(--ink); cursor: wait; }
+
+.btn.ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink);
+}
+.btn.ghost:hover:not(:disabled) { background: var(--surface); }
+.btn.ghost:active:not(:disabled) { background: var(--line-soft); }
+.btn.ghost:disabled { color: var(--dim); border-color: var(--line-soft); }
+
+/* ---------- Workspace ---------- */
+
+.workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(340px, 400px) 1fr;
+}
+
+.form-pane {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 24px 32px 16px;
+  border-right: 1px solid var(--line-soft);
+}
+
+.section + .section { margin-top: 24px; }
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.section-head::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.section-head::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* ---------- File types matrix ---------- */
+
+.type-grid {
+  display: grid;
+  grid-template-columns: 56px 1fr 1fr;
+  align-items: center;
+  row-gap: 4px;
+}
+
+.col-head {
+  font-size: var(--t-s);
+  color: var(--muted);
+  text-align: center;
+  padding-bottom: 4px;
+}
+
+.row-head {
+  font-family: var(--mono);
+  font-size: var(--t-m);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cell {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 32px;
+  border-radius: var(--r-s);
+  cursor: pointer;
+  transition: background-color var(--fast);
+}
+.cell:hover { background: var(--line-soft); }
+
+.cell input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.box {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  transition: background-color var(--fast), border-color var(--fast);
+}
+.cell:hover .box { border-color: var(--muted); }
+.cell input:focus-visible + .box { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cell input:checked + .box { background: var(--accent); border-color: var(--accent); }
+.cell input:checked + .box::after {
+  content: "";
+  width: 8px;
+  height: 4px;
+  border-left: 2px solid var(--bg);
+  border-bottom: 2px solid var(--bg);
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+/* ---------- Segmented control ---------- */
+
+.seg-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.seg {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+}
+.seg label { position: relative; display: block; }
+.seg input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.seg span {
+  display: grid;
+  place-items: center;
+  height: 26px;
+  min-width: 52px;
+  padding: 0 12px;
+  border-radius: var(--r-s);
+  font-size: var(--t-s);
+  color: var(--muted);
+  transition: background-color var(--fast), color var(--fast);
+  pointer-events: none;
+}
+.seg label:hover span { color: var(--ink); }
+.seg input:checked + span { background: var(--accent); color: var(--bg); font-weight: 600; }
+.seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Text input ---------- */
+
+.text-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  font-size: var(--t-m);
+  outline: none;
+  transition: border-color var(--fast), box-shadow var(--fast);
+}
+.mono-input { font-family: var(--mono); }
+.text-input:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.text-input[aria-invalid="true"] { border-color: var(--danger); box-shadow: 0 0 0 1px var(--danger); }
+
+.caption {
+  margin: 4px 0 0;
+  font-size: var(--t-s);
+  color: var(--muted);
+}
+
+/* ---------- Size range ---------- */
+
+.size-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.field { min-width: 0; }
+
+.boundary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 128px;
+  gap: 12px;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: var(--t-s);
+  color: var(--muted);
+}
+
+.stepper {
+  display: flex;
+  height: 32px;
+}
+
+.step-btn {
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color var(--fast), color var(--fast);
+}
+.step-btn:first-child { border-radius: var(--r-s) 0 0 var(--r-s); border-right: 0; }
+.step-btn:last-child { border-radius: 0 var(--r-s) var(--r-s) 0; border-left: 0; }
+.step-btn:hover { background: var(--line); color: var(--ink); }
+.step-btn:active { background: var(--line-soft); }
+.step-btn .icon { width: 14px; height: 14px; }
+
+.step-field {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.step-field input {
+  width: 100%;
+  height: 100%;
+  padding: 0 28px 0 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-family: var(--mono);
+  font-size: var(--t-m);
+  text-align: right;
+  outline: none;
+  transition: border-color var(--fast), box-shadow var(--fast);
+}
+.step-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  position: relative;
+  z-index: 1;
+}
+.step-field input[aria-invalid="true"] {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
+  position: relative;
+  z-index: 1;
+}
+.unit {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  color: var(--muted);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.field-error {
+  margin: 4px 0 0;
+  min-height: 0;
+  font-size: var(--t-s);
+  color: var(--danger);
+}
+.field-error:empty { display: none; }
+#err-sizes { margin-top: 12px; }
+
+.size-preview {
+  margin: 12px 0 0;
+  font-family: var(--mono);
+  font-size: var(--t-s);
+  color: var(--muted);
+  word-break: break-word;
+}
+.size-preview:empty { display: none; }
+
+/* ---------- Output pane ---------- */
+
+.output-pane {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--well);
+}
+
+.out-head {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  font-family: var(--mono);
+  font-size: var(--t-s);
+}
+
+.out-file { color: var(--ink); font-weight: 600; }
+
+.out-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: var(--muted);
+}
+.out-meta .flag { color: var(--danger); }
+.out-meta b { color: var(--syn-num); font-weight: 500; }
+
+.out-status {
+  margin-left: auto;
+  color: var(--muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.out-status.ok { color: var(--ok); }
+.out-status.err { color: var(--danger); }
+.out-status.busy { color: var(--accent); }
+
+.out-warning {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: var(--t-s);
+  color: var(--danger);
+}
+
+.out-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  overflow: auto;
+}
+
+.tree {
+  margin: 0;
+  padding: 12px 16px 24px;
+  font-family: var(--mono);
+  font-size: var(--t-m);
+  line-height: 1.6;
+  color: var(--ink);
+  tab-size: 2;
+  white-space: pre;
+  width: max-content;
+  min-width: 100%;
+}
+.tree .ln { display: inline-block; min-width: 100%; border-radius: 4px; transition: background-color var(--fast); }
+.tree .t-root { color: var(--accent); font-weight: 600; }
+.tree .t-dir { color: var(--accent); }
+.tree .t-cmt { color: var(--muted); }
+.tree .t-num { color: var(--syn-num); }
+.tree .t-file { color: var(--ink); }
+.tree .ln.cur { background: var(--accent-tint); }
+.tree .ln.done .t-num { color: var(--ok); }
+
+.out-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--muted);
+  text-align: center;
+}
+.out-empty .icon { width: 32px; height: 32px; stroke-width: 1.5; }
+.out-empty p { margin: 0; font-size: var(--t-m); }
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  .app { height: auto; min-height: 100vh; }
+  .workspace { display: block; }
+  .form-pane {
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding: 16px;
+  }
+  .output-pane { min-height: 360px; }
+  .out-body { max-height: 70vh; }
+}
+
+@media (max-width: 720px) {
+  .topbar { flex-wrap: wrap; padding: 8px 16px; row-gap: 8px; }
+  .btn { padding: 0; width: 32px; }
+  .btn-label { display: none; }
+}
+
+@media (max-width: 560px) {
+  .size-grid, .boundary-grid { grid-template-columns: 1fr; }
+  .out-status { margin-left: 0; flex-basis: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="chip" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+          <rect x="8" y="8" width="48" height="48" rx="13" class="chip-bg"/>
+          <g class="chip-glyph" transform="translate(14 14) scale(1.5)">
+            <path d="M5.5 18.5 14 10" fill="none" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M17.5 2.6 18.7 5.3 21.4 6.5 18.7 7.7 17.5 10.4 16.3 7.7 13.6 6.5 16.3 5.3Z"/>
+            <circle cx="11" cy="4.6" r="1.1"/>
+            <circle cx="20.4" cy="13" r="1.1"/>
+          </g>
+        </svg>
+        <span class="tool-name">Data Wizard</span>
+        <span class="tool-ver">v0.1</span>
+      </div>
+      <div class="top-actions">
+        <button type="button" id="copy" class="btn ghost" aria-label="Copy manifest" disabled>
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span class="btn-label" id="copy-label">Copy</span>
+        </button>
+        <button type="submit" id="generate" class="btn primary" form="config" aria-label="Generate and download zip" disabled>
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+          <span class="btn-label" id="generate-label">Generate</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <form id="config" class="form-pane" novalidate>
+        <section class="section" aria-labelledby="h-types">
+          <h2 class="section-head" id="h-types">File types</h2>
+          <div class="type-grid" role="group" aria-labelledby="h-types">
+            <span></span>
+            <span class="col-head">Compressible</span>
+            <span class="col-head">Uncompressible</span>
+
+            <span class="row-head">PDF</span>
+            <label class="cell"><input type="checkbox" name="type" value="pdf-comp" aria-label="PDF compressible" checked><span class="box" aria-hidden="true"></span></label>
+            <label class="cell"><input type="checkbox" name="type" value="pdf-unc" aria-label="PDF uncompressible"><span class="box" aria-hidden="true"></span></label>
+
+            <span class="row-head">PNG</span>
+            <label class="cell"><input type="checkbox" name="type" value="png-comp" aria-label="PNG compressible"><span class="box" aria-hidden="true"></span></label>
+            <label class="cell"><input type="checkbox" name="type" value="png-unc" aria-label="PNG uncompressible"><span class="box" aria-hidden="true"></span></label>
+
+            <span class="row-head">JPEG</span>
+            <label class="cell"><input type="checkbox" name="type" value="jpeg-comp" aria-label="JPEG compressible"><span class="box" aria-hidden="true"></span></label>
+            <label class="cell"><input type="checkbox" name="type" value="jpeg-unc" aria-label="JPEG uncompressible"><span class="box" aria-hidden="true"></span></label>
+
+            <span class="row-head">DOCX</span>
+            <label class="cell"><input type="checkbox" name="type" value="docx-comp" aria-label="DOCX compressible"><span class="box" aria-hidden="true"></span></label>
+            <label class="cell"><input type="checkbox" name="type" value="docx-unc" aria-label="DOCX uncompressible"><span class="box" aria-hidden="true"></span></label>
+
+            <span class="row-head">XLSX</span>
+            <label class="cell"><input type="checkbox" name="type" value="xlsx-comp" aria-label="XLSX compressible"><span class="box" aria-hidden="true"></span></label>
+            <label class="cell"><input type="checkbox" name="type" value="xlsx-unc" aria-label="XLSX uncompressible"><span class="box" aria-hidden="true"></span></label>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="h-sizes">
+          <h2 class="section-head" id="h-sizes">Sizes</h2>
+          <div class="seg-row">
+            <div class="seg" role="radiogroup" aria-label="Size mode">
+              <label><input type="radio" name="size-mode" value="range" checked><span>Range</span></label>
+              <label><input type="radio" name="size-mode" value="list"><span>List</span></label>
+              <label><input type="radio" name="size-mode" value="boundary"><span>Boundary</span></label>
+            </div>
+            <div class="seg" role="radiogroup" aria-label="Unit" id="unit-seg">
+              <label><input type="radio" name="size-unit" value="KB"><span>KB</span></label>
+              <label><input type="radio" name="size-unit" value="MB" checked><span>MB</span></label>
+            </div>
+          </div>
+
+          <div class="field" id="list-fields" hidden>
+            <label class="field-label" for="size-list">Size list</label>
+            <input type="text" class="text-input mono-input" id="size-list" autocomplete="off" spellcheck="false" value="1MB, 5MB, 10MB" aria-describedby="list-caption err-list">
+            <p class="caption" id="list-caption">Comma-separated. Units: B, KB, MB.</p>
+            <p class="field-error" id="err-list"></p>
+          </div>
+
+          <div class="boundary-grid" id="boundary-fields" hidden>
+            <div class="field">
+              <label class="field-label" for="size-limits">Limits</label>
+              <input type="text" class="text-input mono-input" id="size-limits" autocomplete="off" spellcheck="false" value="5MB" aria-describedby="limits-caption err-limits">
+              <p class="caption" id="limits-caption">Comma-separated. Units: B, KB, MB.</p>
+              <p class="field-error" id="err-limits"></p>
+            </div>
+            <div class="field">
+              <label class="field-label" for="size-offset">Offset</label>
+              <div class="stepper">
+                <button type="button" class="step-btn" data-target="size-offset" data-delta="-1" aria-label="Decrease offset" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                <div class="step-field"><input type="text" inputmode="numeric" autocomplete="off" id="size-offset" value="1" aria-describedby="err-offset"><span class="unit" aria-hidden="true">B</span></div>
+                <button type="button" class="step-btn" data-target="size-offset" data-delta="1" aria-label="Increase offset" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+              </div>
+              <p class="field-error" id="err-offset"></p>
+            </div>
+          </div>
+
+          <div class="size-grid" id="range-fields">
+            <div class="field">
+              <label class="field-label" for="size-start">Start</label>
+              <div class="stepper">
+                <button type="button" class="step-btn" data-target="size-start" data-delta="-1" aria-label="Decrease start" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                <div class="step-field"><input type="text" inputmode="numeric" autocomplete="off" id="size-start" value="1" aria-describedby="err-start"><span class="unit range-unit" aria-hidden="true">MB</span></div>
+                <button type="button" class="step-btn" data-target="size-start" data-delta="1" aria-label="Increase start" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+              </div>
+              <p class="field-error" id="err-start"></p>
+            </div>
+            <div class="field">
+              <label class="field-label" for="size-step">Step</label>
+              <div class="stepper">
+                <button type="button" class="step-btn" data-target="size-step" data-delta="-1" aria-label="Decrease step" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                <div class="step-field"><input type="text" inputmode="numeric" autocomplete="off" id="size-step" value="1" aria-describedby="err-step"><span class="unit range-unit" aria-hidden="true">MB</span></div>
+                <button type="button" class="step-btn" data-target="size-step" data-delta="1" aria-label="Increase step" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+              </div>
+              <p class="field-error" id="err-step"></p>
+            </div>
+            <div class="field">
+              <label class="field-label" for="size-max">Max</label>
+              <div class="stepper">
+                <button type="button" class="step-btn" data-target="size-max" data-delta="-1" aria-label="Decrease max" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                <div class="step-field"><input type="text" inputmode="numeric" autocomplete="off" id="size-max" value="15" aria-describedby="err-max"><span class="unit range-unit" aria-hidden="true">MB</span></div>
+                <button type="button" class="step-btn" data-target="size-max" data-delta="1" aria-label="Increase max" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+              </div>
+              <p class="field-error" id="err-max"></p>
+            </div>
+          </div>
+          <p class="field-error" id="err-sizes" role="alert"></p>
+          <p class="size-preview" id="size-preview"></p>
+        </section>
+      </form>
+
+      <section class="output-pane" aria-label="Archive manifest">
+        <div class="out-head">
+          <span class="out-file" id="zip-name">DataWizard_YYYY-MM-DD.zip</span>
+          <span class="out-meta" id="meta" aria-live="polite"></span>
+          <span class="out-status" id="status" aria-live="polite"></span>
+        </div>
+        <p class="out-warning" id="warning" role="alert" hidden></p>
+        <div class="out-body">
+          <pre class="tree" id="tree"></pre>
+          <div class="out-empty" id="empty" hidden>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <p id="empty-msg"></p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+/*! client-zip 2.4.5 | MIT License | Copyright 2020 David Junger */
+const __mod_clientZip = (() => {
+"stream"in Blob.prototype||Object.defineProperty(Blob.prototype,"stream",{value(){return new Response(this).body}}),"setBigUint64"in DataView.prototype||Object.defineProperty(DataView.prototype,"setBigUint64",{value(e,n,t){const i=Number(0xffffffffn&n),r=Number(n>>32n);this.setUint32(e+(t?0:4),i,t),this.setUint32(e+(t?4:0),r,t)}});var e=e=>new DataView(new ArrayBuffer(e)),n=e=>new Uint8Array(e.buffer||e),t=e=>(new TextEncoder).encode(String(e)),i=e=>Math.min(4294967295,Number(e)),r=e=>Math.min(65535,Number(e));function f(e,i){if(void 0===i||i instanceof Date||(i=new Date(i)),e instanceof File)return{isFile:1,t:i||new Date(e.lastModified),i:e.stream()};if(e instanceof Response)return{isFile:1,t:i||new Date(e.headers.get("Last-Modified")||Date.now()),i:e.body};if(void 0===i)i=new Date;else if(isNaN(i))throw new Error("Invalid modification date.");if(void 0===e)return{isFile:0,t:i};if("string"==typeof e)return{isFile:1,t:i,i:t(e)};if(e instanceof Blob)return{isFile:1,t:i,i:e.stream()};if(e instanceof Uint8Array||e instanceof ReadableStream)return{isFile:1,t:i,i:e};if(e instanceof ArrayBuffer||ArrayBuffer.isView(e))return{isFile:1,t:i,i:n(e)};if(Symbol.asyncIterator in e)return{isFile:1,t:i,i:o(e[Symbol.asyncIterator]())};throw new TypeError("Unsupported input format.")}function o(e,n=e){return new ReadableStream({async pull(n){let t=0;for(;n.desiredSize>t;){const i=await e.next();if(!i.value){n.close();break}{const e=a(i.value);n.enqueue(e),t+=e.byteLength}}},cancel(e){n.throw?.(e)}})}function a(e){return"string"==typeof e?t(e):e instanceof Uint8Array?e:n(e)}function s(e,i,r){let[f,o]=function(e){return e?e instanceof Uint8Array?[e,1]:ArrayBuffer.isView(e)||e instanceof ArrayBuffer?[n(e),1]:[t(e),0]:[void 0,0]}(i);if(e instanceof File)return{o:d(f||t(e.name)),u:BigInt(e.size),l:o};if(e instanceof Response){const n=e.headers.get("content-disposition"),i=n&&n.match(/;\s*filename\*?=["']?(.*?)["']?$/i),a=i&&i[1]||e.url&&new URL(e.url).pathname.split("/").findLast(Boolean),s=a&&decodeURIComponent(a),u=r||+e.headers.get("content-length");return{o:d(f||t(s)),u:BigInt(u),l:o}}return f=d(f,void 0!==e||void 0!==r),"string"==typeof e?{o:f,u:BigInt(t(e).length),l:o}:e instanceof Blob?{o:f,u:BigInt(e.size),l:o}:e instanceof ArrayBuffer||ArrayBuffer.isView(e)?{o:f,u:BigInt(e.byteLength),l:o}:{o:f,u:u(e,r),l:o}}function u(e,n){return n>-1?BigInt(n):e?void 0:0n}function d(e,n=1){if(!e||e.every((c=>47===c)))throw new Error("The file must have a name.");if(n)for(;47===e[e.length-1];)e=e.subarray(0,-1);else 47!==e[e.length-1]&&(e=new Uint8Array([...e,47]));return e}var l=new Uint32Array(256);for(let e=0;e<256;++e){let n=e;for(let e=0;e<8;++e)n=n>>>1^(1&n&&3988292384);l[e]=n}function y(e,n=0){n^=-1;for(var t=0,i=e.length;t<i;t++)n=n>>>8^l[255&n^e[t]];return(-1^n)>>>0}function w(e,n,t=0){const i=e.getSeconds()>>1|e.getMinutes()<<5|e.getHours()<<11,r=e.getDate()|e.getMonth()+1<<5|e.getFullYear()-1980<<9;n.setUint16(t,i,1),n.setUint16(t+2,r,1)}function B({o:e,l:n},t){return 8*(!n||(t??function(e){try{b.decode(e)}catch{return 0}return 1}(e)))}var b=new TextDecoder("utf8",{fatal:1});function p(t,i=0){const r=e(30);return r.setUint32(0,1347093252),r.setUint32(4,754976768|i),w(t.t,r,10),r.setUint16(26,t.o.length,1),n(r)}async function*g(e){let{i:n}=e;if("then"in n&&(n=await n),n instanceof Uint8Array)yield n,e.m=y(n,0),e.u=BigInt(n.length);else{e.u=0n;const t=n.getReader();for(;;){const{value:n,done:i}=await t.read();if(i)break;e.m=y(n,e.m),e.u+=BigInt(n.length),yield n}}}function I(t,r){const f=e(16+(r?8:0));return f.setUint32(0,1347094280),f.setUint32(4,t.isFile?t.m:0,1),r?(f.setBigUint64(8,t.u,1),f.setBigUint64(16,t.u,1)):(f.setUint32(8,i(t.u),1),f.setUint32(12,i(t.u),1)),n(f)}function v(t,r,f=0,o=0){const a=e(46);return a.setUint32(0,1347092738),a.setUint32(4,755182848),a.setUint16(8,2048|f),w(t.t,a,12),a.setUint32(16,t.isFile?t.m:0,1),a.setUint32(20,i(t.u),1),a.setUint32(24,i(t.u),1),a.setUint16(28,t.o.length,1),a.setUint16(30,o,1),a.setUint16(40,t.isFile?33204:16893,1),a.setUint32(42,i(r),1),n(a)}function h(t,i,r){const f=e(r);return f.setUint16(0,1,1),f.setUint16(2,r-4,1),16&r&&(f.setBigUint64(4,t.u,1),f.setBigUint64(12,t.u,1)),f.setBigUint64(r-8,i,1),n(f)}function D(e){return e instanceof File||e instanceof Response?[[e],[e]]:[[e.input,e.name,e.size],[e.input,e.lastModified]]}var S=e=>function(e){let n=BigInt(22),t=0n,i=0;for(const r of e){if(!r.o)throw new Error("Every file must have a non-empty name.");if(void 0===r.u)throw new Error(`Missing size for file "${(new TextDecoder).decode(r.o)}".`);const e=r.u>=0xffffffffn,f=t>=0xffffffffn;t+=BigInt(46+r.o.length+(e&&8))+r.u,n+=BigInt(r.o.length+46+(12*f|28*e)),i||(i=e)}return(i||t>=0xffffffffn)&&(n+=BigInt(76)),n+t}(function*(e){for(const n of e)yield s(...D(n)[0])}(e));function A(e,n={}){const t={"Content-Type":"application/zip","Content-Disposition":"attachment"};return("bigint"==typeof n.length||Number.isInteger(n.length))&&n.length>0&&(t["Content-Length"]=String(n.length)),n.metadata&&(t["Content-Length"]=String(S(n.metadata))),new Response(N(e,n),{headers:t})}function N(t,a={}){const u=function(e){const n=e[Symbol.iterator in e?Symbol.iterator:Symbol.asyncIterator]();return{async next(){const e=await n.next();if(e.done)return e;const[t,i]=D(e.value);return{done:0,value:Object.assign(f(...i),s(...t))}},throw:n.throw?.bind(n),[Symbol.asyncIterator](){return this}}}(t);return o(async function*(t,f){const o=[];let a=0n,s=0n,u=0;for await(const e of t){const n=B(e,f.buffersAreUTF8);yield p(e,n),yield new Uint8Array(e.o),e.isFile&&(yield*g(e));const t=e.u>=0xffffffffn,i=12*(a>=0xffffffffn)|28*t;yield I(e,t),o.push(v(e,a,n,i)),o.push(e.o),i&&o.push(h(e,a,i)),t&&(a+=8n),s++,a+=BigInt(46+e.o.length)+e.u,u||(u=t)}let d=0n;for(const e of o)yield e,d+=BigInt(e.length);if(u||a>=0xffffffffn){const t=e(76);t.setUint32(0,1347094022),t.setBigUint64(4,BigInt(44),1),t.setUint32(12,755182848),t.setBigUint64(24,s,1),t.setBigUint64(32,s,1),t.setBigUint64(40,d,1),t.setBigUint64(48,a,1),t.setUint32(56,1347094023),t.setBigUint64(64,a+d,1),t.setUint32(72,1,1),yield n(t)}const l=e(22);l.setUint32(0,1347093766),l.setUint16(8,r(s),1),l.setUint16(10,r(s),1),l.setUint32(12,i(d),1),l.setUint32(16,i(a),1),yield n(l)}(u,a),u)}
+return { downloadZip: A, makeZip: N, predictLength: S };
+})();
+const __mod_generators = (() => {
+// Data Wizard file generators. Every generator returns exactly sizeBytes bytes
+// or throws; none may return a different size.
+// PDF:  header + padding + trailer
+// PNG:  real image + prVt ancillary padding chunk
+// JPEG: fixed 8x8 JPEG + COM padding markers
+// DOCX/XLSX: minimal OOXML package (STORE zip) whose thumbnail part is a padded JPEG
+
+// -------- PDF --------
+
+const PDF_HEADER =
+  "%PDF-1.0\n" +
+  "1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n" +
+  "2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n" +
+  "3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 144 144]>>endobj\n" +
+  "xref\n0 4\n" +
+  "0000000000 65535 f \n" +
+  "0000000009 00000 n \n" +
+  "0000000052 00000 n \n" +
+  "0000000101 00000 n \n" +
+  "trailer<</Size 4/Root 1 0 R>>\n";
+
+// Leading newline puts "startxref" on its own line; strict parsers require it.
+const PDF_TRAILER = "\nstartxref\n164\n%%EOF";
+
+const PDF_MIN_SIZE = PDF_HEADER.length + PDF_TRAILER.length;
+
+/** Compressible PDF: header + 'x' padding + trailer. Exact target size. */
+function makePdfCompressible(sizeBytes) {
+  if (sizeBytes < PDF_MIN_SIZE) {
+    throw new Error(`PDF target must be at least ${PDF_MIN_SIZE} bytes`);
+  }
+  const enc = new TextEncoder();
+  const header = enc.encode(PDF_HEADER);
+  const trailer = enc.encode(PDF_TRAILER);
+  const padLen = sizeBytes - header.length - trailer.length;
+  const out = new Uint8Array(sizeBytes);
+  out.set(header, 0);
+  out.fill(0x78, header.length, header.length + padLen); // 'x'
+  out.set(trailer, header.length + padLen);
+  return out;
+}
+
+/** Uncompressible PDF: header + random padding + trailer. Exact target size. */
+function makePdfUncompressible(sizeBytes) {
+  if (sizeBytes < PDF_MIN_SIZE) {
+    throw new Error(`PDF target must be at least ${PDF_MIN_SIZE} bytes`);
+  }
+  const enc = new TextEncoder();
+  const header = enc.encode(PDF_HEADER);
+  const trailer = enc.encode(PDF_TRAILER);
+  const padLen = sizeBytes - header.length - trailer.length;
+  const out = new Uint8Array(sizeBytes);
+  out.set(header, 0);
+  fillRandom(out, header.length, padLen);
+  out.set(trailer, header.length + padLen);
+  return out;
+}
+
+// -------- PNG --------
+// Format: signature + IHDR + IDAT (stored DEFLATE, no compression) + prVt padding + IEND
+// prVt is a valid ancillary+private chunk that decoders ignore.
+
+const PNG_SIGNATURE = new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+
+// Smallest exact PNG: 16x16 RGB image (sig 8 + IHDR 25 + IDAT 12+795 + IEND 12)
+// plus an empty prVt chunk (12). Every size from here up is reachable.
+const PNG_MIN_SIZE = 8 + 25 + (12 + 2 + 5 + 16 * (1 + 16 * 3) + 4) + 12 + 12;
+
+/** Compressible PNG: tiny solid-color image + large prVt chunk of repeating 'x'. Exact size. */
+function makePngCompressible(sizeBytes) {
+  return buildPng(sizeBytes, { mode: "compressible" });
+}
+
+/** Uncompressible PNG: random-pixel image sized close to target + prVt fill for exactness. */
+function makePngUncompressible(sizeBytes) {
+  return buildPng(sizeBytes, { mode: "uncompressible" });
+}
+
+function buildPng(target, { mode }) {
+  if (target < PNG_MIN_SIZE) {
+    throw new Error(`PNG target must be at least ${PNG_MIN_SIZE} bytes`);
+  }
+  // Pick image dimensions
+  let width, height;
+  if (mode === "compressible") {
+    // Tiny image; padding does the work
+    width = 16;
+    height = 16;
+  } else {
+    // Random pixels; fill as much of target as possible via IDAT.
+    // Start from a rough estimate, then shrink until we fit under target with
+    // room for the prVt padding chunk (12 bytes overhead).
+    let w = Math.max(16, Math.floor(Math.sqrt(target / 3)));
+    while (w > 16) {
+      const rawScanline = 1 + w * 3;
+      const rawSize = w * rawScanline;
+      const zlibOverhead = 2 + 5 * Math.max(1, Math.ceil(rawSize / 65535)) + 4;
+      const idatChunkSize = 12 + zlibOverhead + rawSize;
+      const pngSoFar = 8 + 25 + idatChunkSize + 12; // sig + IHDR + IDAT + IEND
+      if (pngSoFar + 12 <= target) break; // 12 = min prVt chunk overhead
+      w--;
+    }
+    width = w;
+    height = w;
+  }
+
+  const rawScanline = 1 + width * 3;
+  const rawSize = height * rawScanline;
+  const rawPixels = new Uint8Array(rawSize);
+
+  if (mode === "compressible") {
+    // Solid dark green (matches our accent). Filter byte 0, then RGB repeats.
+    for (let y = 0; y < height; y++) {
+      const rowStart = y * rawScanline;
+      rawPixels[rowStart] = 0; // filter: None
+      for (let x = 0; x < width; x++) {
+        const p = rowStart + 1 + x * 3;
+        rawPixels[p] = 0x2E;
+        rawPixels[p + 1] = 0x3A;
+        rawPixels[p + 2] = 0x2C;
+      }
+    }
+  } else {
+    // Random pixels. Filter byte MUST be 0-4; set to 0 per scanline.
+    // Fill everything random first, then overwrite filter bytes.
+    fillRandom(rawPixels, 0, rawSize);
+    for (let y = 0; y < height; y++) {
+      rawPixels[y * rawScanline] = 0;
+    }
+  }
+
+  const idatPayload = zlibStored(rawPixels);
+  const idatChunk = makeChunk("IDAT", idatPayload);
+  const ihdrChunk = makeIhdr(width, height);
+  const iendChunk = makeChunk("IEND", new Uint8Array(0));
+
+  const currentSize =
+    PNG_SIGNATURE.length + ihdrChunk.length + idatChunk.length + iendChunk.length;
+
+  if (currentSize > target) {
+    // Only possible for absurdly tiny targets; caller should validate min size upfront.
+    throw new Error(
+      `PNG cannot fit in ${target} bytes (minimum ~${currentSize})`,
+    );
+  }
+
+  // Padding chunk (prVt) to reach exact target.
+  const padChunkOverhead = 12; // length(4) + type(4) + crc(4)
+  const padSize = target - currentSize - padChunkOverhead;
+
+  if (padSize < 0) {
+    // Cannot happen for target >= PNG_MIN_SIZE; never return a wrong size.
+    throw new Error(`PNG cannot hit exactly ${target} bytes`);
+  }
+  const padData = new Uint8Array(padSize);
+  if (mode === "compressible") {
+    padData.fill(0x78); // 'x'
+  } else {
+    fillRandom(padData, 0, padSize);
+  }
+  const prVtChunk = makeChunk("prVt", padData);
+
+  // Assemble: signature, IHDR, IDAT, prVt (padding), IEND
+  const total = PNG_SIGNATURE.length + ihdrChunk.length + idatChunk.length +
+    prVtChunk.length + iendChunk.length;
+  const out = new Uint8Array(total);
+  let off = 0;
+  out.set(PNG_SIGNATURE, off); off += PNG_SIGNATURE.length;
+  out.set(ihdrChunk, off); off += ihdrChunk.length;
+  out.set(idatChunk, off); off += idatChunk.length;
+  out.set(prVtChunk, off); off += prVtChunk.length;
+  out.set(iendChunk, off);
+  return out;
+}
+
+function makeIhdr(width, height) {
+  const data = new Uint8Array(13);
+  const view = new DataView(data.buffer);
+  view.setUint32(0, width, false);
+  view.setUint32(4, height, false);
+  data[8] = 8;   // bit depth
+  data[9] = 2;   // color type: RGB (truecolor)
+  data[10] = 0;  // compression: deflate
+  data[11] = 0;  // filter: standard
+  data[12] = 0;  // interlace: none
+  return makeChunk("IHDR", data);
+}
+
+/** Build a PNG chunk: length(4 BE) | type(4) | data | CRC32(4 BE) of type+data. */
+function makeChunk(type, data) {
+  const typeBytes = new TextEncoder().encode(type);
+  if (typeBytes.length !== 4) throw new Error("chunk type must be 4 ASCII bytes");
+  const len = data.length;
+  const chunk = new Uint8Array(4 + 4 + len + 4);
+  const view = new DataView(chunk.buffer);
+  view.setUint32(0, len, false);
+  chunk.set(typeBytes, 4);
+  chunk.set(data, 8);
+  const crc = crc32(chunk, 4, 8 + len);
+  view.setUint32(8 + len, crc, false);
+  return chunk;
+}
+
+/** zlib-wrapped DEFLATE with only stored (uncompressed) blocks. Valid but not compressed. */
+function zlibStored(data) {
+  const CHUNK = 65535;
+  const numBlocks = data.length === 0 ? 1 : Math.ceil(data.length / CHUNK);
+  const out = new Uint8Array(2 + numBlocks * 5 + data.length + 4);
+  let off = 0;
+
+  // zlib header: CMF=0x78 (deflate, 32K window), FLG=0x01 (fastest, FCHECK makes 0x7801 % 31 == 0)
+  out[off++] = 0x78;
+  out[off++] = 0x01;
+
+  if (data.length === 0) {
+    // Single empty final stored block
+    out[off++] = 0x01; // BFINAL=1, BTYPE=00
+    out[off++] = 0x00; out[off++] = 0x00; // LEN=0
+    out[off++] = 0xFF; out[off++] = 0xFF; // NLEN=~0
+  } else {
+    let pos = 0;
+    while (pos < data.length) {
+      const blockLen = Math.min(CHUNK, data.length - pos);
+      const isFinal = pos + blockLen >= data.length;
+      out[off++] = isFinal ? 0x01 : 0x00; // BFINAL | BTYPE=00
+      out[off++] = blockLen & 0xFF;
+      out[off++] = (blockLen >>> 8) & 0xFF;
+      const nlen = (~blockLen) & 0xFFFF;
+      out[off++] = nlen & 0xFF;
+      out[off++] = (nlen >>> 8) & 0xFF;
+      out.set(data.subarray(pos, pos + blockLen), off);
+      off += blockLen;
+      pos += blockLen;
+    }
+  }
+
+  // Adler32 trailer (big-endian)
+  const adler = adler32(data);
+  new DataView(out.buffer).setUint32(off, adler, false);
+  off += 4;
+
+  return out.subarray(0, off);
+}
+
+// -------- JPEG --------
+// Format: minimal real JPEG + COM markers stuffed with padding to reach exact target.
+// COM (0xFFFE) markers are legal anywhere between SOI and EOI and are skipped by all decoders.
+// Each marker: FF FE | LEN(2 BE, includes length bytes) | payload(LEN-2)
+// Min marker size = 4 (empty payload). Max marker size = 65537 (LEN=0xFFFF, payload=65533).
+
+const JPEG_COM_MIN = 4;
+const JPEG_COM_MAX = 65537;
+
+// Fixed 8x8 baseline JPEG (solid #2E3A2C, quality 50, 631 bytes). Embedded
+// rather than drawn on a canvas so output is identical in every browser and
+// the minimum size is known up front.
+const JPEG_TEMPLATE = Uint8Array.from(
+  atob(
+    "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCAAIAAgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDmaKKKkk//2Q==",
+  ),
+  (c) => c.charCodeAt(0),
+);
+
+// Smallest padded JPEG. (Padding of 1-3 bytes is impossible, so the bare
+// template size is excluded to keep the valid range gap-free.)
+const JPEG_MIN_SIZE = JPEG_TEMPLATE.length + JPEG_COM_MIN;
+
+function makeJpegCompressible(sizeBytes) {
+  return padJpeg(JPEG_TEMPLATE, sizeBytes, "compressible");
+}
+
+function makeJpegUncompressible(sizeBytes) {
+  return padJpeg(JPEG_TEMPLATE, sizeBytes, "uncompressible");
+}
+
+function padJpeg(template, target, mode) {
+  if (template[0] !== 0xFF || template[1] !== 0xD8) {
+    throw new Error("Invalid JPEG template (missing SOI marker)");
+  }
+  if (target < template.length) {
+    throw new Error(
+      `JPEG target ${target} smaller than template ${template.length}`,
+    );
+  }
+  const padding = target - template.length;
+  if (padding > 0 && padding < JPEG_COM_MIN) {
+    throw new Error(
+      `JPEG requires 0 or >=${JPEG_COM_MIN} padding bytes (got ${padding})`,
+    );
+  }
+
+  if (padding === 0) return new Uint8Array(template);
+
+  // Distribute padding across COM markers (each between JPEG_COM_MIN and JPEG_COM_MAX)
+  const markerSizes = distributeJpegMarkers(padding);
+
+  // Layout: SOI (2 bytes) | COM markers | rest of template (from offset 2)
+  const out = new Uint8Array(target);
+  out[0] = 0xFF;
+  out[1] = 0xD8;
+  let off = 2;
+
+  for (const size of markerSizes) {
+    out[off] = 0xFF;
+    out[off + 1] = 0xFE;
+    const len = size - 2; // LEN field includes itself
+    out[off + 2] = (len >>> 8) & 0xFF;
+    out[off + 3] = len & 0xFF;
+    const payloadOff = off + 4;
+    const payloadLen = size - 4;
+    if (mode === "compressible") {
+      out.fill(0x78, payloadOff, payloadOff + payloadLen); // 'x'
+    } else {
+      fillRandom(out, payloadOff, payloadLen);
+    }
+    off += size;
+  }
+
+  out.set(template.subarray(2), off);
+  return out;
+}
+
+function distributeJpegMarkers(total) {
+  const k = Math.max(1, Math.ceil(total / JPEG_COM_MAX));
+  const base = Math.floor(total / k);
+  const extra = total - base * k;
+  const sizes = new Array(k);
+  for (let i = 0; i < k; i++) sizes[i] = base + (i < extra ? 1 : 0);
+  return sizes;
+}
+
+// -------- Office (DOCX / XLSX) --------
+// A minimal OOXML package written as an uncompressed (STORE) zip. Padding lives
+// in docProps/thumbnail.jpeg: the standard OPC package-thumbnail part, linked
+// from _rels/.rels, which Word and Excel themselves write when "save preview
+// picture" is on. The thumbnail is a padded JPEG sized so the whole file hits
+// the target exactly. STORE keeps the padding's compressibility visible to
+// HTTP gzip, which is the point of the compressible/uncompressible split.
+
+const XML_DECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n';
+const NS_CT = "http://schemas.openxmlformats.org/package/2006/content-types";
+const NS_PR = "http://schemas.openxmlformats.org/package/2006/relationships";
+const NS_OR = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+const NS_W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+const NS_S = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+const CT_OOXML = "application/vnd.openxmlformats-officedocument";
+const THUMB_PART = "docProps/thumbnail.jpeg";
+const BODY_TEXT = "Data Wizard test file";
+
+const rootRels = (mainPart) =>
+  XML_DECL +
+  `<Relationships xmlns="${NS_PR}">` +
+  `<Relationship Id="rId1" Type="${NS_OR}/officeDocument" Target="${mainPart}"/>` +
+  `<Relationship Id="rId2" Type="${NS_PR}/metadata/thumbnail" Target="${THUMB_PART}"/>` +
+  `</Relationships>`;
+
+const contentTypes = (overrides) =>
+  XML_DECL +
+  `<Types xmlns="${NS_CT}">` +
+  `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>` +
+  `<Default Extension="xml" ContentType="application/xml"/>` +
+  `<Default Extension="jpeg" ContentType="image/jpeg"/>` +
+  overrides.map(([part, type]) => `<Override PartName="/${part}" ContentType="${type}"/>`).join("") +
+  `</Types>`;
+
+const OFFICE_PARTS = {
+  docx: [
+    ["[Content_Types].xml", contentTypes([
+      ["word/document.xml", `${CT_OOXML}.wordprocessingml.document.main+xml`],
+    ])],
+    ["_rels/.rels", rootRels("word/document.xml")],
+    ["word/document.xml",
+      XML_DECL +
+      `<w:document xmlns:w="${NS_W}"><w:body>` +
+      `<w:p><w:r><w:t>${BODY_TEXT}</w:t></w:r></w:p>` +
+      `<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>` +
+      `<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/>` +
+      `</w:sectPr></w:body></w:document>`],
+  ],
+  xlsx: [
+    ["[Content_Types].xml", contentTypes([
+      ["xl/workbook.xml", `${CT_OOXML}.spreadsheetml.sheet.main+xml`],
+      ["xl/worksheets/sheet1.xml", `${CT_OOXML}.spreadsheetml.worksheet+xml`],
+      ["xl/styles.xml", `${CT_OOXML}.spreadsheetml.styles+xml`],
+    ])],
+    ["_rels/.rels", rootRels("xl/workbook.xml")],
+    ["xl/workbook.xml",
+      XML_DECL +
+      `<workbook xmlns="${NS_S}" xmlns:r="${NS_OR}">` +
+      `<sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets></workbook>`],
+    ["xl/_rels/workbook.xml.rels",
+      XML_DECL +
+      `<Relationships xmlns="${NS_PR}">` +
+      `<Relationship Id="rId1" Type="${NS_OR}/worksheet" Target="worksheets/sheet1.xml"/>` +
+      `<Relationship Id="rId2" Type="${NS_OR}/styles" Target="styles.xml"/>` +
+      `</Relationships>`],
+    ["xl/worksheets/sheet1.xml",
+      XML_DECL +
+      `<worksheet xmlns="${NS_S}"><sheetData>` +
+      `<row r="1"><c r="A1" t="inlineStr"><is><t>${BODY_TEXT}</t></is></c></row>` +
+      `</sheetData></worksheet>`],
+    ["xl/styles.xml",
+      XML_DECL +
+      `<styleSheet xmlns="${NS_S}">` +
+      `<fonts count="1"><font><sz val="11"/><name val="Calibri"/><family val="2"/></font></fonts>` +
+      `<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>` +
+      `<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>` +
+      `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
+      `<cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>` +
+      `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>` +
+      `</styleSheet>`],
+  ],
+};
+
+const ZIP_LOCAL = 30;
+const ZIP_CENTRAL = 46;
+const ZIP_EOCD = 22;
+
+/** Bytes used by everything except the thumbnail's data. */
+function officeFixedSize(kind) {
+  const enc = new TextEncoder();
+  let n = ZIP_EOCD + ZIP_LOCAL + ZIP_CENTRAL + 2 * THUMB_PART.length;
+  for (const [name, text] of OFFICE_PARTS[kind]) {
+    n += ZIP_LOCAL + ZIP_CENTRAL + 2 * name.length + enc.encode(text).length;
+  }
+  return n;
+}
+
+const DOCX_MIN_SIZE = officeFixedSize("docx") + JPEG_MIN_SIZE;
+const XLSX_MIN_SIZE = officeFixedSize("xlsx") + JPEG_MIN_SIZE;
+
+function buildOffice(kind, target, mode) {
+  const fixed = officeFixedSize(kind);
+  if (target < fixed + JPEG_MIN_SIZE) {
+    throw new Error(`${kind.toUpperCase()} target must be at least ${fixed + JPEG_MIN_SIZE} bytes`);
+  }
+  const enc = new TextEncoder();
+  const entries = OFFICE_PARTS[kind].map(([name, text]) => [name, enc.encode(text)]);
+  entries.push([THUMB_PART, padJpeg(JPEG_TEMPLATE, target - fixed, mode)]);
+  return storeZip(entries, target);
+}
+
+/** Uncompressed zip (no data descriptors, no extra fields). Size is exact by construction. */
+function storeZip(entries, expectedSize) {
+  const out = new Uint8Array(expectedSize);
+  const view = new DataView(out.buffer);
+  const now = new Date();
+  const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+  const dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+  const records = [];
+  let off = 0;
+
+  for (const [name, data] of entries) {
+    const nameBytes = new TextEncoder().encode(name);
+    const crc = crc32(data, 0, data.length);
+    records.push({ nameBytes, crc, size: data.length, offset: off });
+    view.setUint32(off, 0x04034B50, true);
+    view.setUint16(off + 4, 20, true);       // version needed
+    view.setUint16(off + 6, 0, true);        // flags
+    view.setUint16(off + 8, 0, true);        // method: STORE
+    view.setUint16(off + 10, dosTime, true);
+    view.setUint16(off + 12, dosDate, true);
+    view.setUint32(off + 14, crc, true);
+    view.setUint32(off + 18, data.length, true);
+    view.setUint32(off + 22, data.length, true);
+    view.setUint16(off + 26, nameBytes.length, true);
+    view.setUint16(off + 28, 0, true);       // extra length
+    out.set(nameBytes, off + ZIP_LOCAL);
+    off += ZIP_LOCAL + nameBytes.length;
+    out.set(data, off);
+    off += data.length;
+  }
+
+  const cdStart = off;
+  for (const r of records) {
+    view.setUint32(off, 0x02014B50, true);
+    view.setUint16(off + 4, 20, true);       // version made by
+    view.setUint16(off + 6, 20, true);       // version needed
+    view.setUint16(off + 8, 0, true);
+    view.setUint16(off + 10, 0, true);
+    view.setUint16(off + 12, dosTime, true);
+    view.setUint16(off + 14, dosDate, true);
+    view.setUint32(off + 16, r.crc, true);
+    view.setUint32(off + 20, r.size, true);
+    view.setUint32(off + 24, r.size, true);
+    view.setUint16(off + 28, r.nameBytes.length, true);
+    // extra len, comment len, disk, internal attrs, external attrs: all 0
+    view.setUint32(off + 42, r.offset, true);
+    out.set(r.nameBytes, off + ZIP_CENTRAL);
+    off += ZIP_CENTRAL + r.nameBytes.length;
+  }
+
+  view.setUint32(off, 0x06054B50, true);
+  view.setUint16(off + 8, records.length, true);
+  view.setUint16(off + 10, records.length, true);
+  view.setUint32(off + 12, off - cdStart, true);
+  view.setUint32(off + 16, cdStart, true);
+  off += ZIP_EOCD;
+
+  if (off !== expectedSize) {
+    throw new Error(`zip size ${off} != target ${expectedSize}`);
+  }
+  return out;
+}
+
+function makeDocxCompressible(sizeBytes) {
+  return buildOffice("docx", sizeBytes, "compressible");
+}
+function makeDocxUncompressible(sizeBytes) {
+  return buildOffice("docx", sizeBytes, "uncompressible");
+}
+function makeXlsxCompressible(sizeBytes) {
+  return buildOffice("xlsx", sizeBytes, "compressible");
+}
+function makeXlsxUncompressible(sizeBytes) {
+  return buildOffice("xlsx", sizeBytes, "uncompressible");
+}
+
+// -------- Minimum sizes --------
+
+/** Smallest valid target per format, in bytes. Every size at or above it is exact. */
+const MIN_BYTES = {
+  pdf: PDF_MIN_SIZE,
+  png: PNG_MIN_SIZE,
+  jpeg: JPEG_MIN_SIZE,
+  docx: DOCX_MIN_SIZE,
+  xlsx: XLSX_MIN_SIZE,
+};
+
+// -------- Checksums --------
+
+const CRC32_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) {
+      c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+    }
+    t[n] = c;
+  }
+  return t;
+})();
+
+function crc32(bytes, start, end) {
+  let c = 0xFFFFFFFF;
+  for (let i = start; i < end; i++) {
+    c = CRC32_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  }
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+function adler32(bytes) {
+  let a = 1, b = 0;
+  const MOD = 65521;
+  // Process in chunks to avoid overflow (safe up to ~5552 bytes per inner loop)
+  const NMAX = 5552;
+  let i = 0;
+  while (i < bytes.length) {
+    const end = Math.min(i + NMAX, bytes.length);
+    for (; i < end; i++) {
+      a += bytes[i];
+      b += a;
+    }
+    a %= MOD;
+    b %= MOD;
+  }
+  return ((b << 16) | a) >>> 0;
+}
+
+// -------- Utils --------
+
+/** Fill a range of a Uint8Array with crypto-random bytes, chunked to respect the 65536 API limit. */
+function fillRandom(buf, offset, length) {
+  const MAX = 65536;
+  let written = 0;
+  while (written < length) {
+    const chunk = Math.min(MAX, length - written);
+    crypto.getRandomValues(buf.subarray(offset + written, offset + written + chunk));
+    written += chunk;
+  }
+}
+
+return { makePdfCompressible, makePdfUncompressible, makePngCompressible, makePngUncompressible, makeJpegCompressible, makeJpegUncompressible, makeDocxCompressible, makeDocxUncompressible, makeXlsxCompressible, makeXlsxUncompressible, MIN_BYTES };
+})();
+(() => {
+const { downloadZip } = __mod_clientZip;
+const {
+  makePdfCompressible,
+  makePdfUncompressible,
+  makePngCompressible,
+  makePngUncompressible,
+  makeJpegCompressible,
+  makeJpegUncompressible,
+  makeDocxCompressible,
+  makeDocxUncompressible,
+  makeXlsxCompressible,
+  makeXlsxUncompressible,
+  MIN_BYTES,
+} = __mod_generators;
+
+// ---------- Config ----------
+
+const KB = 1024;
+const MB = 1024 * 1024;
+const UNIT_BYTES = { B: 1, KB, MB };
+const WARN_TOTAL_BYTES = 500 * MB;
+const MAX_SIZES = 500; // per set; above this the input is rejected, never truncated
+
+const TYPES = {
+  "pdf-comp": { kind: "pdf", dir: "PDF_Compressible", ext: "pdf", prefix: "PDF", make: makePdfCompressible },
+  "pdf-unc": { kind: "pdf", dir: "PDF_Uncompressible", ext: "pdf", prefix: "PDF", make: makePdfUncompressible },
+  "png-comp": { kind: "png", dir: "PNG_Compressible", ext: "png", prefix: "PNG", make: makePngCompressible },
+  "png-unc": { kind: "png", dir: "PNG_Uncompressible", ext: "png", prefix: "PNG", make: makePngUncompressible },
+  "jpeg-comp": { kind: "jpeg", dir: "JPEG_Compressible", ext: "jpg", prefix: "JPEG", make: makeJpegCompressible },
+  "jpeg-unc": { kind: "jpeg", dir: "JPEG_Uncompressible", ext: "jpg", prefix: "JPEG", make: makeJpegUncompressible },
+  "docx-comp": { kind: "docx", dir: "DOCX_Compressible", ext: "docx", prefix: "DOCX", make: makeDocxCompressible },
+  "docx-unc": { kind: "docx", dir: "DOCX_Uncompressible", ext: "docx", prefix: "DOCX", make: makeDocxUncompressible },
+  "xlsx-comp": { kind: "xlsx", dir: "XLSX_Compressible", ext: "xlsx", prefix: "XLSX", make: makeXlsxCompressible },
+  "xlsx-unc": { kind: "xlsx", dir: "XLSX_Uncompressible", ext: "xlsx", prefix: "XLSX", make: makeXlsxUncompressible },
+};
+
+// ---------- DOM references ----------
+
+const $ = (id) => document.getElementById(id);
+const form = $("config");
+const startEl = $("size-start");
+const stepEl = $("size-step");
+const maxEl = $("size-max");
+const listEl = $("size-list");
+const limitsEl = $("size-limits");
+const offsetEl = $("size-offset");
+const rangeFields = $("range-fields");
+const listFields = $("list-fields");
+const boundaryFields = $("boundary-fields");
+const unitSeg = $("unit-seg");
+const previewEl = $("size-preview");
+const errEls = {
+  start: $("err-start"), step: $("err-step"), max: $("err-max"), list: $("err-list"),
+  limits: $("err-limits"), offset: $("err-offset"), sizes: $("err-sizes"),
+};
+const inputFor = { start: startEl, step: stepEl, max: maxEl, list: listEl, limits: limitsEl, offset: offsetEl };
+const zipNameEl = $("zip-name");
+const metaEl = $("meta");
+const statusEl = $("status");
+const warningEl = $("warning");
+const treeEl = $("tree");
+const emptyEl = $("empty");
+const emptyMsgEl = $("empty-msg");
+const generateBtn = $("generate");
+const generateLabel = $("generate-label");
+const copyBtn = $("copy");
+const copyLabel = $("copy-label");
+
+let manifestText = ""; // exactly what Copy puts on the clipboard
+let busy = false;
+
+// ---------- State ----------
+
+function readState() {
+  const types = [...form.querySelectorAll('input[name="type"]:checked')].map((el) => el.value);
+  const mode = form.querySelector('input[name="size-mode"]:checked').value;
+  const unit = form.querySelector('input[name="size-unit"]:checked').value;
+  return {
+    types,
+    mode,
+    unit,
+    start: numOrNull(startEl.value),
+    step: numOrNull(stepEl.value),
+    max: numOrNull(maxEl.value),
+    listText: listEl.value,
+    limitsText: limitsEl.value,
+    offset: numOrNull(offsetEl.value),
+  };
+}
+
+function numOrNull(v) {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 && Math.floor(n) === n ? n : null;
+}
+
+const fmtNum = (n) => n.toLocaleString("en-US");
+
+// Parses "250KB, 1.5MB, 5242879B" into [{ bytes, num, unit }] (input order).
+function parseSizeList(text) {
+  const tokens = text.split(/[,;\n]+/).map((t) => t.trim()).filter(Boolean);
+  if (tokens.length === 0) return { err: "Enter at least one size" };
+  const out = [];
+  const seen = new Map();
+  for (const tok of tokens) {
+    const m = tok.match(/^(\d+(?:\.\d+)?)\s*(b|kb|mb)$/i);
+    if (!m) return { err: `Not a size: ${tok}` };
+    const num = Number(m[1]);
+    const unit = m[2].toUpperCase();
+    const bytes = Math.round(num * UNIT_BYTES[unit]);
+    if (bytes < 1) return { err: `Too small: ${tok}` };
+    const label = `${num}${unit}`;
+    if (seen.has(bytes)) {
+      const prev = seen.get(bytes);
+      return { err: prev === label ? `Listed twice: ${label}` : `Same size twice: ${prev} and ${label}` };
+    }
+    seen.set(bytes, label);
+    out.push({ bytes, num, unit });
+  }
+  return { items: out };
+}
+
+const plainSize = ({ bytes, num, unit }) => ({ bytes, label: `${num}${unit}`, display: `${num} ${unit}` });
+
+// Returns { sizes: [{ bytes, label, display }], errs }. label goes into file
+// names. sizes is empty whenever any error is set, so nothing invalid can
+// reach generation.
+function computeSizes(state) {
+  const errs = { start: "", step: "", max: "", list: "", limits: "", offset: "", sizes: "" };
+  let sizes = [];
+
+  if (state.mode === "boundary") {
+    if (!state.offset) errs.offset = "Whole number, 1 or more";
+    const parsed = parseSizeList(state.limitsText);
+    if (parsed.err) errs.limits = parsed.err;
+    if (!errs.offset && !errs.limits) {
+      const d = state.offset;
+      const seen = new Map();
+      for (const lim of parsed.items.sort((a, b) => a.bytes - b.bytes)) {
+        const base = `${lim.num}${lim.unit}`;
+        if (lim.bytes - d < 1) { errs.offset = `Offset must be below ${base}`; break; }
+        const trio = [
+          { bytes: lim.bytes - d, label: `${base}_minus${d}B`, display: `${lim.num} ${lim.unit} − ${d} B` },
+          { bytes: lim.bytes, label: `${base}_exact`, display: `${lim.num} ${lim.unit}` },
+          { bytes: lim.bytes + d, label: `${base}_plus${d}B`, display: `${lim.num} ${lim.unit} + ${d} B` },
+        ];
+        for (const s of trio) {
+          if (seen.has(s.bytes)) {
+            errs.limits = `Limits overlap at ${fmtNum(s.bytes)} B (${seen.get(s.bytes)} and ${s.label})`;
+            break;
+          }
+          seen.set(s.bytes, s.label);
+          sizes.push(s);
+        }
+        if (errs.limits) break;
+      }
+      if (!errs.limits && !errs.offset && sizes.length > MAX_SIZES) {
+        errs.limits = `${fmtNum(sizes.length)} sizes; limit is ${MAX_SIZES}`;
+      }
+      sizes.sort((a, b) => a.bytes - b.bytes);
+    }
+  } else if (state.mode === "range") {
+    const need = "Whole number, 1 or more";
+    if (!state.start) errs.start = need;
+    if (!state.step) errs.step = need;
+    if (!state.max) errs.max = need;
+    else if (state.start && state.max < state.start) errs.max = "Below Start";
+    if (!errs.start && !errs.step && !errs.max) {
+      const count = Math.floor((state.max - state.start) / state.step) + 1;
+      if (count > MAX_SIZES) {
+        errs.max = `${fmtNum(count)} sizes; limit is ${MAX_SIZES}`;
+      } else {
+        for (let s = state.start; s <= state.max; s += state.step) {
+          sizes.push(plainSize({ bytes: s * UNIT_BYTES[state.unit], num: s, unit: state.unit }));
+        }
+      }
+    }
+  } else {
+    const parsed = parseSizeList(state.listText);
+    if (parsed.err) errs.list = parsed.err;
+    else if (parsed.items.length > MAX_SIZES) errs.list = `${fmtNum(parsed.items.length)} sizes; limit is ${MAX_SIZES}`;
+    else sizes = parsed.items.map(plainSize).sort((a, b) => a.bytes - b.bytes);
+  }
+
+  if (Object.values(errs).some(Boolean)) return { sizes: [], errs };
+
+  // Format minimums (only for the formats actually selected)
+  if (sizes.length && state.types.length) {
+    const smallest = sizes[0].bytes;
+    const kinds = [...new Set(state.types.map((k) => TYPES[k].kind))];
+    const under = kinds.filter((k) => smallest < MIN_BYTES[k]);
+    if (under.length) {
+      errs.sizes = "Smallest size is below the minimum for " +
+        under.map((k) => `${k.toUpperCase()} (${fmtNum(MIN_BYTES[k])} B)`).join(", ");
+      return { sizes: [], errs };
+    }
+  }
+  return { sizes, errs };
+}
+
+function fmtBytes(n) {
+  if (n < 1024) return `${n} B`;
+  if (n < MB) return `${(n / 1024).toFixed(1)} KB`;
+  if (n < 1024 * MB) return `${(n / MB).toFixed(1)} MB`;
+  return `${(n / (1024 * MB)).toFixed(2)} GB`;
+}
+
+function fmtExact(n) {
+  return `${fmtNum(n)} B`;
+}
+
+function todayISO() {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function buildFileSpecs(state, sizes) {
+  const specs = [];
+  for (const key of state.types) {
+    const t = TYPES[key];
+    for (const s of sizes) {
+      specs.push({
+        typeKey: key,
+        dir: t.dir,
+        name: `${t.prefix}_${s.label}.${t.ext}`,
+        sizeBytes: s.bytes,
+      });
+    }
+  }
+  return specs;
+}
+
+function showFieldErrors(errs) {
+  for (const key of Object.keys(errEls)) {
+    errEls[key].textContent = errs[key];
+    const input = inputFor[key];
+    if (!input) continue;
+    if (errs[key]) input.setAttribute("aria-invalid", "true");
+    else input.removeAttribute("aria-invalid");
+  }
+}
+
+// ---------- Rendering ----------
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+// Builds the zip tree. Each line is a list of [class, text] tokens, so the
+// coloured view and the copied plain text come from the same source.
+function buildTree(specs, types, folderName) {
+  const groups = [];
+  for (const key of types) {
+    const files = specs.filter((s) => s.typeKey === key);
+    if (files.length) groups.push({ key, files });
+  }
+
+  const nameCol =
+    Math.max(
+      folderName.length + 1,
+      ...groups.map((g) => 2 + g.files[0].dir.length + 1),
+      ...specs.map((s) => 4 + s.name.length),
+    ) + 4;
+  const numW = Math.max(
+    ...specs.map((s) => fmtExact(s.sizeBytes).length),
+    ...groups.map((g) => fmtBytes(g.files.reduce((a, s) => a + s.sizeBytes, 0)).length),
+  );
+  const countW = Math.max(...groups.map((g) => `${g.files.length} files`.length));
+
+  const lines = [];
+  lines.push({ tokens: [["t-root", `${folderName}/`]] });
+  for (const g of groups) {
+    const dirText = `  ${g.files[0].dir}/`;
+    const bytes = g.files.reduce((a, s) => a + s.sizeBytes, 0);
+    const count = `${g.files.length} file${g.files.length === 1 ? "" : "s"}`;
+    lines.push({
+      tokens: [
+        ["t-dir", dirText],
+        ["", " ".repeat(nameCol - dirText.length)],
+        ["t-cmt", count.padEnd(countW)],
+        ["", "  "],
+        ["t-num", fmtBytes(bytes).padStart(numW)],
+      ],
+    });
+    for (const f of g.files) {
+      const nameText = `    ${f.name}`;
+      lines.push({
+        spec: f,
+        tokens: [
+          ["t-file", nameText],
+          ["", " ".repeat(nameCol - nameText.length + countW + 2)],
+          ["t-num", fmtExact(f.sizeBytes).padStart(numW)],
+        ],
+      });
+    }
+  }
+  return lines;
+}
+
+function renderTree(lines) {
+  const frag = document.createDocumentFragment();
+  const plain = [];
+  let fileIdx = 0;
+  for (const line of lines) {
+    const span = el("span", "ln");
+    if (line.spec) span.dataset.i = String(fileIdx++);
+    let text = "";
+    for (const [cls, t] of line.tokens) {
+      text += t;
+      span.appendChild(cls ? el("span", cls, t) : document.createTextNode(t));
+    }
+    plain.push(text);
+    frag.appendChild(span);
+    frag.appendChild(document.createTextNode("\n"));
+  }
+  treeEl.replaceChildren(frag);
+  return plain.join("\n") + "\n";
+}
+
+function renderMeta(setCount, totalFiles, totalBytes) {
+  const items = [
+    [String(setCount), setCount === 1 ? " set" : " sets"],
+    [fmtNum(totalFiles), totalFiles === 1 ? " file" : " files"],
+    [fmtBytes(totalBytes), ""],
+  ];
+  const frag = document.createDocumentFragment();
+  for (const [num, unit] of items) {
+    const s = el("span");
+    s.appendChild(el("b", "", num));
+    if (unit) s.appendChild(document.createTextNode(unit));
+    frag.appendChild(s);
+  }
+  if (totalBytes > WARN_TOTAL_BYTES) frag.appendChild(el("span", "flag", "> 500 MB"));
+  metaEl.replaceChildren(frag);
+}
+
+function render({ clearStatus = true } = {}) {
+  const state = readState();
+
+  // Mode-dependent controls
+  const isRange = state.mode === "range";
+  rangeFields.hidden = !isRange;
+  listFields.hidden = state.mode !== "list";
+  boundaryFields.hidden = state.mode !== "boundary";
+  unitSeg.hidden = !isRange;
+  for (const u of form.querySelectorAll(".range-unit")) u.textContent = state.unit;
+
+  const { sizes, errs } = computeSizes(state);
+  showFieldErrors(errs);
+  const sizesValid = !Object.values(errs).some(Boolean);
+
+  // Size preview line
+  if (sizesValid && sizes.length) {
+    const shown = sizes.slice(0, 12).map((s) => s.display).join(", ");
+    const suffix = sizes.length > 12 ? `, … (${sizes.length} total)` : "";
+    previewEl.textContent = `Sizes: ${shown}${suffix}`;
+  } else {
+    previewEl.textContent = "";
+  }
+
+  // Zip filename
+  const folderName = `DataWizard_${todayISO()}`;
+  zipNameEl.textContent = `${folderName}.zip`;
+
+  // Manifest
+  const specs = buildFileSpecs(state, sizes);
+  const totalFiles = specs.length;
+  const totalBytes = specs.reduce((a, s) => a + s.sizeBytes, 0);
+  const setCount = new Set(specs.map((s) => s.typeKey)).size;
+
+  if (totalFiles === 0) {
+    treeEl.replaceChildren();
+    treeEl.hidden = true;
+    emptyEl.hidden = false;
+    emptyMsgEl.textContent =
+      errs.sizes ? "Sizes below the format minimum."
+      : !sizesValid ? { range: "Invalid size range.", list: "Invalid size list.", boundary: "Invalid boundary limits." }[state.mode]
+      : "No file types selected.";
+    manifestText = "";
+    metaEl.replaceChildren();
+  } else {
+    treeEl.hidden = false;
+    emptyEl.hidden = true;
+    manifestText = renderTree(buildTree(specs, state.types, folderName));
+    renderMeta(setCount, totalFiles, totalBytes);
+  }
+
+  // Warning
+  if (totalBytes > WARN_TOTAL_BYTES) {
+    warningEl.textContent = `Batch is ${fmtBytes(totalBytes)}. Above 500 MB, browser memory can become the bottleneck and the download may fail on Firefox or Safari. Chrome and Edge stream to disk and handle larger sizes.`;
+    warningEl.hidden = false;
+  } else {
+    warningEl.hidden = true;
+  }
+
+  generateBtn.disabled = busy || totalFiles === 0;
+  copyBtn.disabled = totalFiles === 0;
+
+  // Clear stale status
+  if (clearStatus && !busy) setStatus("");
+
+  return specs;
+}
+
+function setStatus(msg, cls = "") {
+  statusEl.textContent = msg;
+  statusEl.classList.remove("ok", "err", "busy");
+  if (cls) statusEl.classList.add(cls);
+}
+
+// ---------- Zip generation ----------
+
+async function* fileStream(specs, folderName, onProgress) {
+  let idx = 0;
+  for (const spec of specs) {
+    idx += 1;
+    onProgress(idx, specs.length, spec);
+    // Yield to event loop so status updates paint before CPU work
+    await new Promise((r) => setTimeout(r, 0));
+    const bytes = await TYPES[spec.typeKey].make(spec.sizeBytes);
+    if (bytes.length !== spec.sizeBytes) {
+      throw new Error(`${spec.name} came out at ${bytes.length} bytes, expected ${spec.sizeBytes}`);
+    }
+    yield {
+      name: `${folderName}/${spec.dir}/${spec.name}`,
+      input: bytes,
+      lastModified: new Date(),
+    };
+  }
+}
+
+function markProgress(i) {
+  // i is 1-based index of the file now being generated
+  const prev = treeEl.querySelector(".ln.cur");
+  if (prev) {
+    prev.classList.remove("cur");
+    prev.classList.add("done");
+  }
+  const cur = treeEl.querySelector(`.ln[data-i="${i - 1}"]`);
+  if (cur) {
+    cur.classList.add("cur");
+    cur.scrollIntoView({ block: "nearest" });
+  }
+}
+
+function finishProgress() {
+  const prev = treeEl.querySelector(".ln.cur");
+  if (prev) {
+    prev.classList.remove("cur");
+    prev.classList.add("done");
+  }
+}
+
+async function generate(event) {
+  event.preventDefault();
+  if (busy) return;
+
+  busy = true;
+  const specs = render({ clearStatus: false }); // fresh tree, no stale progress marks
+  if (specs.length === 0) {
+    busy = false;
+    render({ clearStatus: false });
+    return;
+  }
+
+  const folderName = `DataWizard_${todayISO()}`;
+  const zipName = `${folderName}.zip`;
+
+  form.inert = true;
+  generateBtn.disabled = true;
+  generateBtn.classList.add("working");
+  generateLabel.textContent = "Generating…";
+  setStatus("Preparing…", "busy");
+
+  const onProgress = (i, total, spec) => {
+    setStatus(`[${i}/${total}] ${spec.dir}/${spec.name}`, "busy");
+    markProgress(i);
+  };
+
+  let cancelled = false;
+  try {
+    // Prefer streaming direct-to-disk via File System Access API.
+    const canSaveFile = "showSaveFilePicker" in window;
+
+    if (canSaveFile) {
+      let handle;
+      try {
+        handle = await window.showSaveFilePicker({
+          suggestedName: zipName,
+          types: [{ description: "Zip archive", accept: { "application/zip": [".zip"] } }],
+        });
+      } catch (e) {
+        if (e && e.name === "AbortError") {
+          cancelled = true;
+          setStatus("Cancelled.");
+          return;
+        }
+        throw e;
+      }
+      const writable = await handle.createWritable();
+      const response = downloadZip(fileStream(specs, folderName, onProgress));
+      await response.body.pipeTo(writable);
+      finishProgress();
+      setStatus(`Wrote ${zipName}.`, "ok");
+    } else {
+      // Fallback: buffer to a Blob, trigger anchor download.
+      const response = downloadZip(fileStream(specs, folderName, onProgress));
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = zipName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      finishProgress();
+      setStatus(`Downloaded ${zipName} (${fmtBytes(blob.size)}).`, "ok");
+    }
+  } catch (err) {
+    console.error(err);
+    setStatus(`Failed: ${err.message || err}`, "err");
+  } finally {
+    busy = false;
+    form.inert = false;
+    generateBtn.classList.remove("working");
+    generateLabel.textContent = "Generate";
+    // Refresh button state; keep the result message (and progress marks) visible.
+    if (cancelled) render({ clearStatus: false });
+    else generateBtn.disabled = false;
+  }
+}
+
+// ---------- Copy ----------
+
+async function copyManifest() {
+  if (!manifestText) return;
+  let ok = false;
+  try {
+    await navigator.clipboard.writeText(manifestText);
+    ok = true;
+  } catch {
+    // Clipboard API blocked (file://, insecure context): fall back to execCommand
+    const ta = document.createElement("textarea");
+    ta.value = manifestText;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { ok = document.execCommand("copy"); } catch { ok = false; }
+    ta.remove();
+  }
+  copyLabel.textContent = ok ? "Copied" : "Copy failed";
+  copyBtn.setAttribute("aria-label", ok ? "Copied" : "Copy failed");
+  clearTimeout(copyManifest.t);
+  copyManifest.t = setTimeout(() => {
+    copyLabel.textContent = "Copy";
+    copyBtn.setAttribute("aria-label", "Copy manifest");
+  }, 1500);
+}
+
+// ---------- Numeric inputs and steppers ----------
+
+function sanitize(input) {
+  const digits = input.value.replace(/\D+/g, "");
+  if (digits !== input.value) {
+    const pos = input.selectionStart - (input.value.length - digits.length);
+    input.value = digits;
+    try { input.setSelectionRange(Math.max(pos, 0), Math.max(pos, 0)); } catch {}
+  }
+}
+
+function bump(input, delta) {
+  const cur = numOrNull(input.value) ?? 0;
+  input.value = String(Math.max(1, cur + delta));
+  render();
+}
+
+for (const input of [startEl, stepEl, maxEl, offsetEl]) {
+  input.addEventListener("input", () => sanitize(input));
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowUp") { e.preventDefault(); bump(input, 1); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); bump(input, -1); }
+  });
+}
+
+form.addEventListener("click", (e) => {
+  const btn = e.target.closest(".step-btn");
+  if (!btn) return;
+  bump(document.getElementById(btn.dataset.target), Number(btn.dataset.delta));
+});
+
+// ---------- Wire up ----------
+
+form.addEventListener("input", () => render());
+form.addEventListener("change", () => render());
+form.addEventListener("submit", generate);
+copyBtn.addEventListener("click", copyManifest);
+
+render();
+
+})();
+</script>
+</body>
+</html>

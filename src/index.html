@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Data Wizard</title>
+  <meta name="description" content="Byte-precise test file generator for load and upload testing. Runs in the browser, downloads as a zip.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="chip" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+          <rect x="8" y="8" width="48" height="48" rx="13" class="chip-bg"/>
+          <g class="chip-glyph" transform="translate(14 14) scale(1.5)">
+            <path d="M5.5 18.5 14 10" fill="none" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M17.5 2.6 18.7 5.3 21.4 6.5 18.7 7.7 17.5 10.4 16.3 7.7 13.6 6.5 16.3 5.3Z"/>
+            <circle cx="11" cy="4.6" r="1.1"/>
+            <circle cx="20.4" cy="13" r="1.1"/>
+          </g>
+        </svg>
+        <span class="tool-name">Data Wizard</span>
+        <span class="tool-ver">v0.1</span>
+      </div>
+      <div class="top-actions">
+        <button type="button" id="copy" class="btn ghost" aria-label="Copy manifest" disabled>
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span class="btn-label" id="copy-label">Copy</span>
+        </button>
+        <button type="submit" id="generate" class="btn primary" form="config" aria-label="Generate and download zip" disabled>
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+          <span class="btn-label" id="generate-label">Generate</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <form id="config" class="form-pane" novalidate>
+        <section class="section" aria-labelledby="h-types">
+          <h2 class="section-head" id="h-types">File types</h2>
+          <div class="type-grid" role="group" aria-labelledby="h-types">
+            <span></span>
+            <span class="col-head">Compressible</span>
+            <span class="col-head">Uncompressible</span>
+
+            <span class="row-head">PDF</span>
+            <label class="cell"><input type="checkbox" name="type" value="pdf-comp" aria-label="PDF compressible" checked><span class="box" aria-hidden="true"></span></label>
+            <label class="cell"><input type="checkbox" name="type" value="pdf-unc" aria-label="PDF uncompressible"><span class="box" aria-hidden="true"></span></label>
+
+            <span class="row-head">PNG</span>
+            <label class="cell"><input type="checkbox" name="type" value="png-comp" aria-label="PNG compressible"><span class="box" aria-hidden="true"></span></label>
+            <label class="cell"><input type="checkbox" name="type" value="png-unc" aria-label="PNG uncompressible"><span class="box" aria-hidden="true"></span></label>
+
+            <span class="row-head">JPEG</span>
+            <label class="cell"><input type="checkbox" name="type" value="jpeg-comp" aria-label="JPEG compressible"><span class="box" aria-hidden="true"></span></label>
+            <label class="cell"><input type="checkbox" name="type" value="jpeg-unc" aria-label="JPEG uncompressible"><span class="box" aria-hidden="true"></span></label>
+
+            <span class="row-head">DOCX</span>
+            <label class="cell"><input type="checkbox" name="type" value="docx-comp" aria-label="DOCX compressible"><span class="box" aria-hidden="true"></span></label>
+            <label class="cell"><input type="checkbox" name="type" value="docx-unc" aria-label="DOCX uncompressible"><span class="box" aria-hidden="true"></span></label>
+
+            <span class="row-head">XLSX</span>
+            <label class="cell"><input type="checkbox" name="type" value="xlsx-comp" aria-label="XLSX compressible"><span class="box" aria-hidden="true"></span></label>
+            <label class="cell"><input type="checkbox" name="type" value="xlsx-unc" aria-label="XLSX uncompressible"><span class="box" aria-hidden="true"></span></label>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="h-sizes">
+          <h2 class="section-head" id="h-sizes">Sizes</h2>
+          <div class="seg-row">
+            <div class="seg" role="radiogroup" aria-label="Size mode">
+              <label><input type="radio" name="size-mode" value="range" checked><span>Range</span></label>
+              <label><input type="radio" name="size-mode" value="list"><span>List</span></label>
+              <label><input type="radio" name="size-mode" value="boundary"><span>Boundary</span></label>
+            </div>
+            <div class="seg" role="radiogroup" aria-label="Unit" id="unit-seg">
+              <label><input type="radio" name="size-unit" value="KB"><span>KB</span></label>
+              <label><input type="radio" name="size-unit" value="MB" checked><span>MB</span></label>
+            </div>
+          </div>
+
+          <div class="field" id="list-fields" hidden>
+            <label class="field-label" for="size-list">Size list</label>
+            <input type="text" class="text-input mono-input" id="size-list" autocomplete="off" spellcheck="false" value="1MB, 5MB, 10MB" aria-describedby="list-caption err-list">
+            <p class="caption" id="list-caption">Comma-separated. Units: B, KB, MB.</p>
+            <p class="field-error" id="err-list"></p>
+          </div>
+
+          <div class="boundary-grid" id="boundary-fields" hidden>
+            <div class="field">
+              <label class="field-label" for="size-limits">Limits</label>
+              <input type="text" class="text-input mono-input" id="size-limits" autocomplete="off" spellcheck="false" value="5MB" aria-describedby="limits-caption err-limits">
+              <p class="caption" id="limits-caption">Comma-separated. Units: B, KB, MB.</p>
+              <p class="field-error" id="err-limits"></p>
+            </div>
+            <div class="field">
+              <label class="field-label" for="size-offset">Offset</label>
+              <div class="stepper">
+                <button type="button" class="step-btn" data-target="size-offset" data-delta="-1" aria-label="Decrease offset" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                <div class="step-field"><input type="text" inputmode="numeric" autocomplete="off" id="size-offset" value="1" aria-describedby="err-offset"><span class="unit" aria-hidden="true">B</span></div>
+                <button type="button" class="step-btn" data-target="size-offset" data-delta="1" aria-label="Increase offset" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+              </div>
+              <p class="field-error" id="err-offset"></p>
+            </div>
+          </div>
+
+          <div class="size-grid" id="range-fields">
+            <div class="field">
+              <label class="field-label" for="size-start">Start</label>
+              <div class="stepper">
+                <button type="button" class="step-btn" data-target="size-start" data-delta="-1" aria-label="Decrease start" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                <div class="step-field"><input type="text" inputmode="numeric" autocomplete="off" id="size-start" value="1" aria-describedby="err-start"><span class="unit range-unit" aria-hidden="true">MB</span></div>
+                <button type="button" class="step-btn" data-target="size-start" data-delta="1" aria-label="Increase start" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+              </div>
+              <p class="field-error" id="err-start"></p>
+            </div>
+            <div class="field">
+              <label class="field-label" for="size-step">Step</label>
+              <div class="stepper">
+                <button type="button" class="step-btn" data-target="size-step" data-delta="-1" aria-label="Decrease step" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                <div class="step-field"><input type="text" inputmode="numeric" autocomplete="off" id="size-step" value="1" aria-describedby="err-step"><span class="unit range-unit" aria-hidden="true">MB</span></div>
+                <button type="button" class="step-btn" data-target="size-step" data-delta="1" aria-label="Increase step" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+              </div>
+              <p class="field-error" id="err-step"></p>
+            </div>
+            <div class="field">
+              <label class="field-label" for="size-max">Max</label>
+              <div class="stepper">
+                <button type="button" class="step-btn" data-target="size-max" data-delta="-1" aria-label="Decrease max" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                <div class="step-field"><input type="text" inputmode="numeric" autocomplete="off" id="size-max" value="15" aria-describedby="err-max"><span class="unit range-unit" aria-hidden="true">MB</span></div>
+                <button type="button" class="step-btn" data-target="size-max" data-delta="1" aria-label="Increase max" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+              </div>
+              <p class="field-error" id="err-max"></p>
+            </div>
+          </div>
+          <p class="field-error" id="err-sizes" role="alert"></p>
+          <p class="size-preview" id="size-preview"></p>
+        </section>
+      </form>
+
+      <section class="output-pane" aria-label="Archive manifest">
+        <div class="out-head">
+          <span class="out-file" id="zip-name">DataWizard_YYYY-MM-DD.zip</span>
+          <span class="out-meta" id="meta" aria-live="polite"></span>
+          <span class="out-status" id="status" aria-live="polite"></span>
+        </div>
+        <p class="out-warning" id="warning" role="alert" hidden></p>
+        <div class="out-body">
+          <pre class="tree" id="tree"></pre>
+          <div class="out-empty" id="empty" hidden>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <p id="empty-msg"></p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
